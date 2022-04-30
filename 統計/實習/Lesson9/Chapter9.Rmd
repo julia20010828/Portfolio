@@ -1,0 +1,126 @@
+---
+title: "Chapter9"
+output: html_document
+---
+```{r}
+packages = c("dplyr","data.table")
+existing = as.character(installed.packages()[,1])
+for(pkg in packages[!(packages %in% existing)]) install.packages(pkg)
+```
+
+```{r}
+library(data.table)
+library(dplyr)
+library(car)
+library(ggplot2)
+```
+
+```{r}
+InsectSprays
+```
+單因子變異數分析：
+使用條件：
+(1)各組母體均為常態分配
+(2)各組母體的變異數相等
+(3)各組母體互相獨立
+
+使用shapiro.test：
+shapiro.test函數檢查資料是否為常態分布。
+# p-value > 0.05，資料符合常態分布。
+# p-value < 0.05，資料不符合常態分布。
+```{r}
+shapiro.test(sqrt(InsectSprays$count))
+```
+
+使用leveneTest：
+確認不同組別數值是否變異數相等。
+# p-value > 0.05，資料數值符合相同變異數。
+# p-value < 0.05，資料數值不符合相同變異數。
+```{r}
+leveneTest(sqrt(count) ~ spray,InsectSprays)
+```
+
+不同殺蟲劑效果是否相同? 
+H0: A = B = C = D = E =F。
+HA: 殺蟲劑的效果不完全相同。
+
+方法一：
+使用aov function：
+```{r}
+aov.spray <- aov(sqrt(count) ~ spray, data = InsectSprays)
+summary(aov.spray)
+```
+
+方法二：
+使用 oneway.test：
+```{r}
+oneway.test(sqrt(count) ~ spray, data = InsectSprays, var.equal = TRUE)
+```
+
+雙因子變異數分析：
+使用條件：
+(1)各組母體均為常態分配
+(2)各組母體的變異數相等
+(3)各組母體互相獨立
+```{r}
+m <- read.table(header = TRUE, text = "
+Hor Sex Conc
+N_H F 16.3
+N_H F 20.4
+N_H F 12.4
+N_H F 15.8
+N_H F 9.5
+N_H M 15.3
+N_H M 17.4
+N_H M 10.9
+N_H M 10.3
+N_H M 6.7
+A_H F 38.1
+A_H F 26.2
+A_H F 32.3
+A_H F 35.8
+A_H F 30.2
+A_H M 34
+A_H M 22.8
+A_H M 27.8
+A_H M 25
+A_H M 29.3")
+
+#調查人類血漿中鉀離子濃度
+# Hor：N_H: 沒注射賀爾蒙，A_H: 有注射賀爾蒙。
+# Conc：鉀離子濃度(mg/100 ml)
+
+# H0: 注射賀爾蒙沒影響。 HA: 注射賀爾蒙有影響。
+# H0: 性別沒影響。 HA: 性別有影響。
+# H0: 性別及注射賀爾蒙沒交互作用。 HA: 性別及注射賀爾蒙有交互作用。
+```
+
+
+```{r}
+ggplot(m, aes(x = Hor, y = Conc, color = Sex)) +
+  geom_boxplot()
+```
+
+使用interaction.plot function：
+兩個因子交互作用的狀況
+```{r}
+interaction.plot(m$Sex, m$Hor, m$Conc)
+interaction.plot(m$Hor, m$Sex, m$Conc)
+```
+
+使用aov function：
+```{r}
+fm <- aov(Conc ~ Hor * Sex, data = m)
+summary(fm)
+```
+
+使用TukeyHSD function：
+計算顯示有差異的組別
+p < 0.05是平均值有差異的組別。
+```{r}
+TukeyHSD(fm)
+```
+
+報告題目：
+1.婚姻狀況(Marital_Status)跟交易金額(Total_Trans_Amt)的關係。
+2.性別(Gender)跟交易金額(Total_Trans_Amt)的關係。

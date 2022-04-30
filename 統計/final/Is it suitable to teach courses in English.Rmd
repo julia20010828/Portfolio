@@ -1,0 +1,312 @@
+---
+title: "Is it suitable to teach courses in English"
+output: html_document
+---
+#設定
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(car)
+library(data.table)
+
+survey=read.csv("D://中山大學//統計學//final_2~4//Is it suitable to teach courses in English.csv")
+#names(survey)
+graph=read.csv("D://中山大學//統計學//final_2~4//yes_no_reason.csv", header = T, encoding = 'UTF-8')
+names(graph)
+```
+#1.區間估計--自信程度的平均
+```{r}
+#母體的變異數未知的情況，用t分布
+mean.range=function(x, alpha=0.05) {
+  n=length(x) # n = 樣本數
+  mx=mean(x) # mx 即為平均值 mu 的點估計
+  S=sqrt(var(x)) # S 即為標準差的點估計
+  r1=qt(alpha/2, df=n-1) # 信賴區間，下半截掉 alpha/2
+  r2=qt(1-alpha/2, df=n-1) # 信賴區間，上半截掉 alpha/2
+  L1=mx-r2*S/sqrt(n) # 信賴區間下限
+  L2=mx-r1*S/sqrt(n) # 信賴區間上限
+  range=c(L1, mx, L2)
+  return(range)
+}
+confident=survey %>% select(confident_level)
+mean.range(confident$confident_level)
+```
+#2.假說檢定--多益成績平均to 2020全台灣(全世界)[中山在全台/世界的位置高於平均or低於平均]
+```{r}
+#2020年台灣地區考生平均成績為566分
+#H0 : mu <= 566
+#H1 : mu > 566
+
+toeic_test = survey %>% filter(toeic_test == '是')
+length(toeic_test)
+score = toeic_test$toeic_total
+asbio::one.sample.z(score , null.mu = 566, sigma = sd(score), alternative = "greater", conf = 0.95)
+```
+#3.贊成不贊成:比例->原因分析(贊成的最主要原因是?不贊成的最主要原因是?)
+```{r}
+#H0 : p <= 1/2
+#H1 : p > 1/2
+yes = survey %>% filter(English_Course == '是')
+
+agree_disagree = yes$yes_no
+
+length(agree_disagree)
+
+length(agree_disagree[agree_disagree == '贊成'])
+
+binom.test(x = length(agree_disagree[agree_disagree == '贊成']), n = length(agree_disagree), p = 1/2, alternative = "greater",conf.level = 0.95)
+```
+
+```{r}
+#直方圖
+agree = survey %>% filter(yes_no == '贊成')
+
+agrbar =  ggplot(agree , aes(x=agree1 ,fill = as.factor(agree1))) + geom_bar() + #先畫長條圖
+    labs(title = "贊成英文授課的原因 - 我的英文好棒棒，能夠應付得來，甚至有點期待英語授課！")
+agrbar
+
+agrbar =  ggplot(agree , aes(x=agree2 ,fill = as.factor(agree2))) + geom_bar() + #先畫長條圖
+    labs(title = "贊成英文授課的原因 - 未來出路有可能會用到英文（e.g. 出國留學、工作要求）")
+agrbar
+
+agrbar =  ggplot(agree , aes(x=agree3 ,fill = as.factor(agree3))) + geom_bar() + #先畫長條圖
+    labs(title = "贊成英文授課的原因 - 可以藉由英文授課的時間練習英文(平常可能抽不出時間) ")
+agrbar
+
+agrbar =  ggplot(agree , aes(x=agree4 ,fill = as.factor(agree4))) + geom_bar() + #先畫長條圖
+    labs(title = "贊成英文授課的原因 - 英語授課比較容易接軌國際")
+agrbar
+
+agrbar =  ggplot(agree , aes(x=agree5 ,fill = as.factor(agree5))) + geom_bar() + #先畫長條圖
+    labs(title = "贊成英文授課的原因 - 可以直接吸收專業知識")
+agrbar
+
+agrbar =  ggplot(agree , aes(x=agree6 ,fill = as.factor(agree6))) + geom_bar() + #先畫長條圖
+    labs(title = "贊成英文授課的原因 - 對英文出題的考試有幫助")
+agrbar
+
+#直方圖
+disagree = survey %>% filter(yes_no == '不贊成')
+
+disagrbar =  ggplot(disagree , aes(x=disagree1 ,fill = as.factor(disagree1))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 我的英文死透透了，真的不是太期待用英文上課")
+disagrbar
+
+disagrbar =  ggplot(disagree , aes(x=disagree2 ,fill = as.factor(disagree2))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 專業知識用中文都不太好理解了，還用英文解釋！？")
+disagrbar
+
+disagrbar =  ggplot(disagree , aes(x=disagree3 ,fill = as.factor(disagree3))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 作業／考試／報告要用英文寫很痛苦")
+disagrbar
+
+disagrbar =  ggplot(disagree , aes(x=disagree4 ,fill = as.factor(disagree4))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 我會因為英文而無法發揮自己的實力")
+disagrbar
+
+disagrbar =  ggplot(disagree , aes(x=disagree5 ,fill = as.factor(disagree5))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 入學時，大家的英語程度都不一樣，與其用英語授課，不如先加強基礎教育（e.g. 英語口說、通識英文）")
+disagrbar
+
+disagrbar =  ggplot(disagree , aes(x=disagree6 ,fill = as.factor(disagree6))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 擔心聽不懂老師說的英文(e.g. 發音)")
+disagrbar
+
+disagrbar =  ggplot(disagree , aes(x=disagree7 ,fill = as.factor(disagree7))) + geom_bar() + #先畫長條圖
+    labs(title = "不贊成英文授課的原因 - 我覺得英文對我的未來沒有幫助")
+disagrbar
+```
+```{r}
+names(graph)
+#長條圖
+agree = graph %>% filter(yes_no == 'yes')
+
+ggplot(data=agree)+
+    geom_bar(aes(x=X.U.FEFF.yesreason, fill = as.factor(yeslevel) )) +  #用aes()描繪圖內的各種屬性，根據月份顯示不同的顏色
+    #facet_grid(.~yeslevel)  #每個月份各畫一張直方圖，用facet()，Month放在右邊，故圖片以水平方向呈現
+facet_grid(yeslevel~.) #垂直
+
+ggplot(agree, aes(x = yeslevel, fill = X.U.FEFF.yesreason)) + 
+  geom_bar(position = "fill")
+
+ggplot(agree, aes(x = X.U.FEFF.yesreason, fill = yeslevel)) + 
+  geom_bar(position = "fill")
+
+ggplot(data = agree, aes(x=X.U.FEFF.yesreason, fill = as.factor(yeslevel))) + geom_bar(position = "dodge")
+
+ggplot(data=graph)+
+    geom_bar(aes(x=noreason, fill = as.factor(nolevel) )) +  #用aes()描繪圖內的各種屬性，根據月份顯示不同的顏色
+    #facet_grid(.~yeslevel)  #每個月份各畫一張直方圖，用facet()，Month放在右邊，故圖片以水平方向呈現
+facet_grid(nolevel~.) #垂直
+
+ggplot(agree, aes(x = nolevel, fill = noreason)) + 
+  geom_bar(position = "fill")
+
+ggplot(agree, aes(x = noreason, fill = nolevel)) + 
+  geom_bar(position = "fill")
+```
+```{r}
+
+agree1 = c(14, 25, 39, 10, 1)
+agree2 = c(42, 39, 7, 1, 0)
+agree3 = c(32, 40, 12, 4, 1)
+agree4 = c(27, 43, 17, 2, 0)
+agree5 = c(16, 32, 31, 9, 1)
+agree6 = c(16, 37, 29, 6, 1)
+x1 = rbind(agree1, agree2, agree3, agree4, agree5, agree6)
+colnames(x1) <- c("非常同意","同意","普通","不同意","非常不同意")
+chisq.test(x1)
+
+#<0.05 拒絕H0 不同贊成原因的人其同意程度有差異
+
+agree1 = c(12, 18, 24, 15, 8)
+agree2 = c(55, 17, 3, 0, 2)
+agree3 = c(20, 24, 23, 6, 4)
+agree4 = c(16, 34, 15, 9, 3)
+agree5 = c(28, 33, 11, 2, 3)
+agree6 = c(29, 24, 21, 3, 0)
+agree7 = c(4, 3, 11, 25, 34)
+x2 = rbind(agree1, agree2, agree3, agree4, agree5, agree6, agree7)
+colnames(x2) <- c("非常同意","同意","普通","不同意","非常不同意")
+chisq.test(x2)
+
+#<0.05 拒絕H0 不同不贊成原因的人其同意程度有差異
+```
+#4.贊成不贊成:比例->贊成/不贊成原因是出自何多益程度(英文好?不好?)
+```{r}
+toeic_test = survey %>% filter(toeic_test == '是') %>% filter(English_Course == '是')
+
+ggplot(data=toeic_test)+
+  geom_histogram(aes(x=toeic_total, fill = as.factor(yes_no) )) +  #用aes()描繪圖內的各種屬性，根據月份顯示不同的顏色
+  #facet_grid(.~yes_no)  #每個月份各畫一張直方圖，用facet()，Month放在右邊，故圖片以水平方向呈現
+  facet_grid(yes_no~.)
+```
+#5.假說檢定--自信程度與雙語年數有什麼關聯?
+```{r}
+t5=survey %>% select(confident_level,bilingual_year)
+ggplot(t5,aes(x=confident_level,fill=confident_level))+geom_bar(position="dodge")
+ggplot(t5,aes(x=bilingual_year,fill=bilingual_year))+geom_bar(position="dodge")
+ggplot(t5,aes(x=confident_level,fill=bilingual_year))+geom_bar(position="dodge")
+ggplot(t5,aes(x=confident_level,fill=bilingual_year))+geom_bar()
+##卡方獨立性
+# H0 : 自信程度與雙語年數互相獨立
+# H1 : 自信程度與雙語年數互相不獨立
+chisq.test(table(t5))
+#p=0.005832，<0.05，拒絕H0，自信程度與雙語年數互相不獨立->有相關
+```
+#6.假說檢定--自信程度與自學程度?
+```{r}
+t6=survey %>% select(confident_level,self_study)
+ggplot(t6,aes(x=confident_level,fill=confident_level))+geom_bar(position="dodge")
+ggplot(t6,aes(x=self_study,fill=self_study))+geom_bar(position="dodge")
+##卡方獨立性
+# H0 : 自信程度與雙語年數互相獨立
+# H1 : 自信程度與雙語年數互相不獨立
+table(t6)
+chisq.test(table(t6))
+#p=0.003976，<0.05，拒絕H0，自信程度與自學程度互相不獨立->有相關
+```
+#7.ANOVA--自信程度/多益成績/...與贊成/不贊成英語授課有什麼關聯?
+```{r}
+
+```
+#8.ANOVA--各院的多益成績比較
+```{r}
+t8=survey %>% group_by(college) %>% filter(toeic_total!="NA") %>% select(college,toeic_total,toeic_listening)
+ggplot(t8, aes(x = college, y = toeic_total, color = college)) +
+  geom_boxplot()
+shapiro.test(t8$toeic_total)#非常態分佈，但資料量>30，應該ok
+leveneTest(toeic_total ~ college,t8)#相同變異數
+oneway.test(toeic_total ~ college, data = t8, var.equal = TRUE)
+#H0: A = B = C = D = E =F。
+#H1: 各院的多益成績不完全相同。
+#p=0.01529，<0.05，各院的多益成績不完全相同
+```
+#9.假說檢定(if n<30的作法:T)--五大學群贊成不贊成的比例
+```{r}
+
+```
+#10.假說檢定(if n<30的作法:T)--院內贊成不贊成的比例
+```{r}
+
+```
+#11.雙因子--學院、贊成不贊成 對 多益分數/自信程度
+```{r}
+#多益分數
+t11=survey %>% filter(toeic_total!="NA"&(yes_no=="贊成"|yes_no=="不贊成")) %>% select(college,yes_no,toeic_total,confident_level)
+interaction.plot(t11$college, t11$yes_no, t11$toeic_total)
+ggplot(t11, aes(x = college, y = toeic_total, color = yes_no)) +
+  geom_boxplot()
+ggplot(t11, aes(x = yes_no, y = toeic_total, color = college)) +
+  geom_boxplot()
+#自信程度
+interaction.plot(t11$college, t11$yes_no, t11$confident_level)
+ggplot(t11, aes(x = college, y = confident_level, color = yes_no)) +
+  geom_boxplot()
+ggplot(t11, aes(x = yes_no, y = confident_level, color = college)) +
+  geom_boxplot()
+```
+#12.雙因子--學院、雙語年數(當成類別) 對 多益分數/自信程度
+```{r}
+#多益分數
+t12=survey %>% filter(toeic_total!="NA") %>% select(college,bilingual_year,toeic_total,confident_level)
+interaction.plot(t12$college, t12$bilingual_year, t12$toeic_total)
+ggplot(t12, aes(x = college, y = toeic_total, color = bilingual_year)) +
+  geom_boxplot()
+ggplot(t12, aes(x = bilingual_year, y = toeic_total, color = college)) +
+  geom_boxplot()
+#自信程度
+interaction.plot(t12$college, t12$bilingual_year, t12$confident_level)
+ggplot(t12, aes(x = college, y = confident_level, color = bilingual_year)) +
+  geom_boxplot()
+ggplot(t12, aes(x = bilingual_year, y = confident_level, color = college)) +
+  geom_boxplot()
+```
+#13.自信程度與其他因素的影響--with多益成績
+```{r}
+toeic_test = survey %>% filter(toeic_test == '是')
+
+toeic_test.lm <- lm(confident_level ~ toeic_total,
+              data = toeic_test)
+
+shapiro.test(toeic_test.lm$residual)
+durbinWatsonTest(toeic_test.lm)
+ncvTest(toeic_test.lm)
+
+summary(toeic_test.lm)
+
+autoplot(toeic_test.lm)
+
+cor(toeic_test$toeic_total, toeic_test$confident_level)
+```
+#14.自信程度與其他因素的影響--with自學程度
+```{r}
+survey.lm <- lm(confident_level ~ self_study,
+              data = survey)
+
+shapiro.test(survey.lm$residual)
+durbinWatsonTest(survey.lm)
+ncvTest(survey.lm)
+
+summary(survey.lm)
+
+autoplot(survey.lm)
+
+cor(survey$self_study, survey$confident_level)
+```
+#15.
+```{r}
+toeic_test = survey %>% filter(toeic_test == '是')
+
+toeic_test.lm <- lm(confident_level ~ self_study + toeic_total,
+              data = toeic_test)
+
+shapiro.test(toeic_test.lm$residual)
+durbinWatsonTest(toeic_test.lm)
+ncvTest(toeic_test.lm)
+
+summary(toeic_test.lm)
+
+autoplot(toeic_test.lm)
+```

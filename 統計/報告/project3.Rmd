@@ -1,0 +1,87 @@
+---
+title: "chapter8"
+output: html_document
+---
+```{r include=FALSE}
+packages = c("dplyr","ggplot2","data.table","BSDA","ggpubr")
+existing = as.character(installed.packages()[,1])
+for(pkg in packages[!(packages %in% existing)]) install.packages(pkg)
+```
+
+```{r include=FALSE}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(BSDA)
+```
+
+```{r}
+data <- fread("D:\\中山大學\\統計學\\實習\\Lesson6\\BankChurners_new.csv")
+```
+
+分群：
+```{r}
+contactLess <- data %>% filter(Contacts_Count_12_mon < 3)
+contactMore <- data %>% filter(Contacts_Count_12_mon >= 3)
+attrLess <- contactLess %>% filter(Attrition_Flag == 'Attrited Customer')
+attrMore <- contactMore %>% filter(Attrition_Flag == 'Attrited Customer')
+```
+
+z.test使用Total_Revolving_Bal：
+H0: mu1(聯繫少的週轉餘額) <= mu2(聯繫多的週轉餘額)
+H1: mu1(聯繫少的週轉餘額) > mu2(聯繫多的週轉餘額)
+結果: 不拒絕H0
+# alternative = "two.sided" 執行雙尾檢定。
+# 如果要檢定: H0: m1 ≥ m2，HA: m1 < m2或H0: m1 > m2，HA: m1 ≤ m2，alternative = "less"。
+# 如果要檢定: H0: m1 ≤ m2，HA: m1 > m2或H0: m1 < m2，HA: m1 ≥ m2，alternative = "greater"。
+# p-value < 0.05，H0: m1 = m2不成立。
+# p-value > 0.05，H0: m1 = m2成立。
+```{r}
+
+z.test(contactLess$Total_Revolving_Bal, contactMore$Total_Revolving_Bal, alternative = "greater", sigma.x = sd(contactLess$Total_Revolving_Bal), sigma.y = sd(contactMore$Total_Revolving_Bal), conf.level = 0.95)
+
+```
+
+z.test使用Total_Relationship_Count：
+H0: mu1(聯繫少的銀行產品數量) <= mu2(聯繫多的銀行產品數量)
+H1: mu1(聯繫少的銀行產品數量) > mu2(聯繫多的銀行產品數量)
+結果: 不拒絕H0
+# alternative = "two.sided" 執行雙尾檢定。
+# 如果要檢定: H0: m1 ≥ m2，HA: m1 < m2或H0: m1 > m2，HA: m1 ≤ m2，alternative = "less"。
+# 如果要檢定: H0: m1 ≤ m2，HA: m1 > m2或H0: m1 < m2，HA: m1 ≥ m2，alternative = "greater"。
+# p-value < 0.05，H0: m1 = m2不成立。
+# p-value > 0.05，H0: m1 = m2成立。
+```{r}
+
+z.test(contactLess$Total_Relationship_Count, contactMore$Total_Relationship_Count, alternative = "less", sigma.x = sd(contactLess$Total_Relationship_Count), sigma.y = sd(contactMore$Total_Relationship_Count), conf.level = 0.95)
+?z.test
+```
+
+z.test使用Total_Trans_Amt：
+H0: mu1(聯繫少的交易金額) <= mu2(聯繫多的交易金額)
+H1: mu1(聯繫少的交易金額) > mu2(聯繫多的交易金額)
+結果: 拒絕H0
+# alternative = "two.sided" 執行雙尾檢定。
+# 如果要檢定: H0: m1 ≥ m2，HA: m1 < m2或H0: m1 > m2，HA: m1 ≤ m2，alternative = "less"。
+# 如果要檢定: H0: m1 ≤ m2，HA: m1 > m2或H0: m1 < m2，HA: m1 ≥ m2，alternative = "greater"。
+# p-value < 0.05，H0: m1 = m2不成立。
+# p-value > 0.05，H0: m1 = m2成立。
+```{r}
+
+z.test(contactLess$Total_Trans_Amt, contactMore$Total_Trans_Amt, alternative = "greater", sigma.x = sd(contactLess$Total_Trans_Amt), sigma.y = sd(contactMore$Total_Trans_Amt), conf.level = 0.95)
+
+```
+
+雙樣本的比例檢定：
+H0: p1(聯繫少的週轉餘額) <= p2(聯繫多的週轉餘額)
+H1: p1(聯繫少的週轉餘額) > p2(聯繫多的週轉餘額)
+結果: 不拒絕H0
+無足夠證據證明聯繫次數少的會員流失比例大於聯繫次數多的會員流失比例
+```{r}
+x=c(nrow(attrLess), nrow(attrMore))
+y=c(nrow(contactLess), nrow(contactMore))
+
+prop.test(x,y,alternative='less')
+?prop.test
+```

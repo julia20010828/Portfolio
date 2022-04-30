@@ -1,0 +1,107 @@
+---
+title: "Chapter11"
+output: html_document
+---
+```{r include=FALSE}
+packages = c("dplyr","ggplot2","data.table","car","ggfortify")
+existing = as.character(installed.packages()[,1])
+for(pkg in packages[!(packages %in% existing)]) install.packages(pkg)
+```
+
+```{r include=FALSE}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(car)
+library(ggfortify)
+```
+
+```{r}
+ggplot(data=iris) + 
+  geom_point(aes(x=Petal.Length,
+                  y=Petal.Width,
+                  color=Species))
+```
+檢查是否有遺漏值：
+```{r}
+sum(is.na(iris))
+```
+遺漏值的處理：
+1.移除遺漏值
+```{r}
+# 移除有遺漏值的資料
+# data <- data[complete.cases(data), ]
+```
+2.填補遺漏值
+```{r}
+#下用平均數，來填補某一欄位的遺漏值
+# mean.data <- data
+# mean.1 <- mean(mean.data[, 1], na.rm = T)  # 第一欄位的平均數
+# na.rows <- is.na(mean.data[, 1])           # 第一欄位中，有遺漏值存在的資料
+# 
+# # 用第一欄位的平均數，填補第一欄位的遺漏值
+# mean.data[na.rows, 1] <- mean.1
+```
+
+# 建立迴歸模型
+```{r}
+iris.lm <- lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
+              data = iris)
+```
+
+# 查看模型配適結果
+```{r}
+summary(iris.lm)
+```
+
+#從輸出的結果中，可以看出各個解釋變數的係數，若將整個模型寫出來就會像這樣：
+
+Sepal.Length = 0.65084 * Sepal.Width
+             + 0.70913 * Petal.Length
+             - 0.55648 * Petal.Width
+             + 1.856
+
+對照p-value，三個自變數(X)對Y都表示顯著。
+R-squared: 0.8586 ； Adj R-squared: 0.8557，表示模型預測能力不錯。
+Residual standard error: 0.3145，計算殘差的標準差。
+
+#劃出診斷模型圖：
+```{r}
+autoplot(iris.lm)
+```
+
+#建立出一個線性回歸時，必須要確認其殘差(residual)是否符合下面三個假設：
+  1.常態性(Normality)
+  2.獨立性(Independence)
+  3.變異數同質性(Homogeneity of Variance)
+```{r}
+names(iris.lm)
+```
+
+```{r}
+iris.lm$residual
+```
+常態性假設：
+ H0:殘差符合常態分配
+```{r}
+shapiro.test(iris.lm$residual)
+```
+獨立性假設：
+  H0:殘差間相互獨立
+```{r}
+durbinWatsonTest(iris.lm) 
+```
+變異數同質性假設：
+  H0:殘差變異數具有同質性
+```{r}
+ncvTest(iris.lm)
+```
+假設有一筆新的觀測值，只有Sepal.Width、Petal.Length、Petal.Width的資訊，可以用建好的迴歸模型，預測出Sepal.Length的值：
+```{r}
+new.iris <- data.frame(Sepal.Width=3.456, Petal.Length=1.535, Petal.Width=0.341)
+new.iris
+```
+
+```{r}
+predict(iris.lm, new.iris)
+```

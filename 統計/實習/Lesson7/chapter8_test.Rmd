@@ -1,0 +1,30 @@
+---
+title: "chapter8_test"
+output: html_document
+---
+考題一：
+請問男女性用卡額度的平均數會一樣嗎?(會或不會)
+Answer:不會
+```{r}
+ggerrorplot(data, x = "Gender", y = "Credit_Limit", 
+            desc_stat = "mean_ci", color = "Gender" , palette="uchicago", size=.9) + 
+  labs(x="Gender", y = "Credit_Limit", title= "性別信用卡額度 信賴區間圖") + 
+  theme_minimal() + theme(axis.text.x = element_text(angle=90))
+```
+
+考題二：
+假設從A、B兩班中各隨機抽樣調查 10 位學生的身高，想看看兩班的平均身高是否有差異?
+Answer:有差異
+
+A班身高：178, 180, 170, 175, 185, 168, 160, 160, 175, 165
+B班身高：155, 179, 187, 171, 172, 180, 165, 188, 166, 177
+
+A_height = c(178, 180, 170, 175, 185, 168, 160, 160, 175, 165)
+B_height = c(155, 179, 187, 171, 172, 180, 165, 188, 166, 177)
+
+shapiro.test(A_height)
+shapiro.test(B_height)
+
+var.test(A_height, B_height)
+t.test(A_height, B_height, var.equal = T)
+
